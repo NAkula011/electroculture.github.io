@@ -1,39 +1,80 @@
 <?php
   /**
-  * Requires the "PHP Email Form" library
-  * The "PHP Email Form" library is available only in the pro version of the template
-  * The library should be uploaded to: vendor/php-email-form/php-email-form.php
-  * For more info and help: https://bootstrapmade.com/php-email-form/
+  * Custom PHP Email Form Class Implementation
   */
 
-  // Replace contact@example.com with your real receiving email address
-  $receiving_email_address = 'mundhadanm@rknec.edu';
+  class PHP_Email_Form {
+    public $to;
+    public $from_name;
+    public $from_email;
+    public $subject;
+    public $smtp = [];
+    public $messages = [];
+    public $ajax = false;
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
+    // Function to add message
+    public function add_message($message, $label) {
+      $this->messages[] = ['label' => $label, 'message' => $message];
+    }
+
+    // Function to send the email
+    public function send() {
+      $headers = "From: " . $this->from_email . "\r\n";
+      $headers .= "Reply-To: " . $this->from_email . "\r\n";
+      $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+      $body = "";
+      foreach ($this->messages as $msg) {
+        $body .= $msg['label'] . ": " . $msg['message'] . "\n";
+      }
+
+      return mail($this->to, $this->subject, $body, $headers);
+    }
   }
 
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['email'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject ="New Subscription: " . $_POST['email'];
+  // Replace with your actual receiving email address
+  $receiving_email_address = 'mundhadanm@rknec.edu';
 
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
+  // Check if the form has been submitted
+  if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['email'])) {
 
-  $contact->add_message( $_POST['email'], 'Email');
+    // Sanitize and validate the email address
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      die('Invalid email format.');
+    }
 
-  echo $contact->send();
+    // Initialize the PHP_Email_Form
+    $contact = new PHP_Email_Form;
+    $contact->ajax = true;
+
+    // Set the recipient and sender details
+    $contact->to = $receiving_email_address;
+    $contact->from_name = $email;
+    $contact->from_email = $email;
+    $contact->subject = "New Subscription: " . $email;
+
+    // Optional: Uncomment the below code if you want to use SMTP to send emails
+    /*
+    $contact->smtp = array(
+      'host' => 'smtp.example.com',
+      'username' => 'your_username',
+      'password' => 'your_password',
+      'port' => '587'
+    );
+    */
+
+    // Add the email message
+    $contact->add_message($email, 'Email');
+
+    // Send the email and handle the response
+    if ($contact->send()) {
+      echo 'Your subscription request has been sent successfully!';
+    } else {
+      echo 'There was an error sending your subscription request.';
+    }
+  } else {
+    die('Form was not submitted correctly.');
+  }
 ?>
