@@ -42,7 +42,8 @@
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
     
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      die('Invalid email format.');
+      echo json_encode(['error' => 'Invalid email format.']);
+      exit;
     }
 
     // Initialize the PHP_Email_Form
@@ -70,11 +71,11 @@
 
     // Send the email and handle the response
     if ($contact->send()) {
-      echo 'Your subscription request has been sent successfully!';
+      echo json_encode(['success' => 'Your subscription request has been sent successfully!']);
     } else {
-      echo 'There was an error sending your subscription request.';
+      echo json_encode(['error' => 'There was an error sending your subscription request.']);
     }
   } else {
-    die('Form was not submitted correctly.');
+    echo json_encode(['error' => 'Form was not submitted correctly.']);
   }
 ?>
